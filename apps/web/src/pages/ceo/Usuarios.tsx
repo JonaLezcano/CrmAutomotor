@@ -11,10 +11,11 @@ interface UsuarioListado {
 }
 
 const ROLES = [Rol.VENDEDOR, Rol.SUPERVISOR, Rol.CEO];
+const FORM_INICIAL = { nombre: '', dni: '', telefono: '', sector: '', usuario: '', password: '', rol: Rol.VENDEDOR };
 
 export function Usuarios() {
   const [usuarios, setUsuarios] = useState<UsuarioListado[]>([]);
-  const [form, setForm] = useState({ nombre: '', dni: '', telefono: '', sector: '', usuario: '', password: '', rol: Rol.VENDEDOR });
+  const [form, setForm] = useState(FORM_INICIAL);
   const [error, setError] = useState<string | null>(null);
 
   async function cargar() {
@@ -30,7 +31,7 @@ export function Usuarios() {
     setError(null);
     try {
       await api.post('/usuarios', form);
-      setForm({ nombre: '', dni: '', telefono: '', sector: '', usuario: '', password: '', rol: Rol.VENDEDOR });
+      setForm(FORM_INICIAL);
       await cargar();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'No se pudo crear el usuario');
@@ -38,10 +39,21 @@ export function Usuarios() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
       <h2>Usuarios</h2>
 
-      <form onSubmit={onSubmit} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+      <form
+        onSubmit={onSubmit}
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+          gap: 'var(--space-3)',
+          background: 'var(--color-bg-raised)',
+          border: '1px solid var(--color-border)',
+          borderRadius: 'var(--radius-md)',
+          padding: 'var(--space-4)',
+        }}
+      >
         <input placeholder="Nombre" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} required />
         <input placeholder="DNI" value={form.dni} onChange={(e) => setForm({ ...form, dni: e.target.value })} required />
         <input placeholder="Teléfono" value={form.telefono} onChange={(e) => setForm({ ...form, telefono: e.target.value })} required />
@@ -61,9 +73,24 @@ export function Usuarios() {
             </option>
           ))}
         </select>
-        <button type="submit">Crear</button>
+        <button type="submit" style={{ alignSelf: 'end' }}>
+          Crear usuario
+        </button>
       </form>
-      {error && <div style={{ color: '#e5484d' }}>{error}</div>}
+      {error && (
+        <div
+          role="alert"
+          style={{
+            background: 'var(--color-danger-bg)',
+            color: 'var(--color-danger)',
+            fontSize: 13,
+            padding: 'var(--space-2) var(--space-3)',
+            borderRadius: 'var(--radius-sm)',
+          }}
+        >
+          {error}
+        </div>
+      )}
 
       <table>
         <thead>
@@ -78,9 +105,9 @@ export function Usuarios() {
           {usuarios.map((u) => (
             <tr key={u.id}>
               <td>{u.nombre}</td>
-              <td>{u.usuario}</td>
+              <td style={{ fontFamily: 'var(--font-mono)' }}>{u.usuario}</td>
               <td>{u.rol}</td>
-              <td>{u.estadoDisponibilidad}</td>
+              <td style={{ color: 'var(--color-text-muted)' }}>{u.estadoDisponibilidad}</td>
             </tr>
           ))}
         </tbody>

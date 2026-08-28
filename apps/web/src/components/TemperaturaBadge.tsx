@@ -1,10 +1,5 @@
 import { Temperatura } from '@crm/shared';
-
-const COLOR: Record<Temperatura, string> = {
-  [Temperatura.caliente]: '#e5484d',
-  [Temperatura.tibio]: '#f5a623',
-  [Temperatura.frio]: '#4a90d9',
-};
+import { Gauge } from './Gauge';
 
 const LABEL: Record<Temperatura, string> = {
   [Temperatura.caliente]: 'Caliente',
@@ -12,18 +7,28 @@ const LABEL: Record<Temperatura, string> = {
   [Temperatura.frio]: 'Frío',
 };
 
+const COLOR: Record<Temperatura, string> = {
+  [Temperatura.caliente]: 'var(--color-caliente)',
+  [Temperatura.tibio]: 'var(--color-tibio)',
+  [Temperatura.frio]: 'var(--color-frio)',
+};
+
 export function TemperaturaBadge({ temperatura }: { temperatura: Temperatura }) {
   return (
     <span
       style={{
-        background: COLOR[temperatura],
-        color: 'white',
-        borderRadius: 999,
-        padding: '2px 10px',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        fontFamily: 'var(--font-display)',
         fontSize: 12,
+        letterSpacing: '0.06em',
+        textTransform: 'uppercase',
         fontWeight: 600,
+        color: COLOR[temperatura],
       }}
     >
+      <Gauge temperatura={temperatura} size={18} />
       {LABEL[temperatura]}
     </span>
   );

@@ -5,6 +5,20 @@
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
   },
+  "jest": {
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.ts$": "ts-jest"
+    },
+    "moduleNameMapper": {
+      "^@crm/shared$": "<rootDir>/../../../packages/shared/src/index.ts"
+    },
+    "collectCoverageFrom": [
+      "**/*.service.ts",
+      "**/*.guard.ts"
+    ]
+  },
   "scripts": {
     "build": "nest build",
     "start": "nest start",

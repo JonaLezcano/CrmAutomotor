@@ -1,24 +1,37 @@
-import { Lead } from '@crm/shared';
+import { Lead, Temperatura } from '@crm/shared';
 import { TemperaturaBadge } from './TemperaturaBadge';
+
+const BORDE: Record<Temperatura, string> = {
+  [Temperatura.caliente]: 'var(--color-caliente)',
+  [Temperatura.tibio]: 'var(--color-tibio)',
+  [Temperatura.frio]: 'var(--color-frio)',
+};
 
 export function LeadCard({ lead, accion }: { lead: Lead; accion?: React.ReactNode }) {
   return (
     <div
       style={{
-        border: '1px solid #333',
-        borderRadius: 8,
-        padding: 12,
+        background: 'var(--color-bg-raised)',
+        border: '1px solid var(--color-border)',
+        borderLeft: `3px solid ${BORDE[lead.temperatura]}`,
+        borderRadius: 'var(--radius-md)',
+        padding: 'var(--space-4)',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        gap: 12,
+        gap: 'var(--space-4)',
       }}
     >
-      <div>
-        <div style={{ fontWeight: 600 }}>{lead.nombre ?? 'Sin nombre'}</div>
-        <div style={{ fontSize: 13, opacity: 0.7 }}>{lead.telefono}</div>
-        <div style={{ marginTop: 4 }}>
-          <TemperaturaBadge temperatura={lead.temperatura} /> <span style={{ fontSize: 12, opacity: 0.6 }}>score {lead.score}</span>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <span style={{ fontWeight: 600 }}>{lead.nombre ?? 'Sin nombre'}</span>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--color-text-muted)' }}>
+          {lead.telefono}
+        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 2 }}>
+          <TemperaturaBadge temperatura={lead.temperatura} />
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--color-text-faint)' }}>
+            score {String(lead.score).padStart(3, '0')}
+          </span>
         </div>
       </div>
       {accion}

@@ -42,10 +42,27 @@ export function Bolsa() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
       <h2>Bolsa de datos</h2>
-      {mensaje && <div style={{ color: '#e5484d' }}>{mensaje}</div>}
-      {leads.length === 0 && <p style={{ opacity: 0.6 }}>No hay leads en la bolsa ahora mismo.</p>}
+      {mensaje && (
+        <div
+          role="alert"
+          style={{
+            background: 'var(--color-danger-bg)',
+            color: 'var(--color-danger)',
+            fontSize: 13,
+            padding: 'var(--space-2) var(--space-3)',
+            borderRadius: 'var(--radius-sm)',
+          }}
+        >
+          {mensaje}
+        </div>
+      )}
+      {leads.length === 0 && (
+        <p style={{ color: 'var(--color-text-muted)' }}>
+          No hay leads esperando. En cuanto entre uno nuevo por Instagram, WhatsApp o la web, aparece acá al instante.
+        </p>
+      )}
       {leads.map((lead) => (
         <LeadCard key={lead.id} lead={lead} accion={<button onClick={() => tomar(lead.id)}>Tomar</button>} />
       ))}

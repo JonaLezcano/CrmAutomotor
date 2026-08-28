@@ -20,17 +20,23 @@ export function MisLeads() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
       <h2>Mis leads</h2>
-      {leads.length === 0 && <p style={{ opacity: 0.6 }}>No tenés leads asignados.</p>}
+      {leads.length === 0 && (
+        <p style={{ color: 'var(--color-text-muted)' }}>
+          No tenés leads en curso. Tomá uno de la bolsa para arrancar.
+        </p>
+      )}
       {leads.map((lead) => (
         <LeadCard
           key={lead.id}
           lead={lead}
           accion={
-            <div style={{ display: 'flex', gap: 6 }}>
+            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
               <button onClick={() => marcar(lead.id, EstadoLead.contactado)}>Contactado</button>
-              <button onClick={() => marcar(lead.id, EstadoLead.perdido)}>Perdido</button>
+              <button className="secundario" onClick={() => marcar(lead.id, EstadoLead.perdido)}>
+                Perdido
+              </button>
             </div>
           }
         />
