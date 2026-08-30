@@ -1,14 +1,24 @@
 import { useEffect, useState } from 'react';
-import { Lead, SocketEvent } from '@crm/shared';
+import { Lead, Rol, SocketEvent } from '@crm/shared';
 import { api, ApiError } from '../../lib/api';
 import { conectarSocket } from '../../lib/socket';
 import { useAuthStore } from '../../store/auth';
 import { LeadCard } from '../../components/LeadCard';
 
+interface UsuarioListado {
+  id: string;
+  nombre: string;
+  rol: Rol;
+}
+
 export function Bolsa() {
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [vendedores, setVendedores] = useState<UsuarioListado[]>([]);
+  const [asignaciones, setAsignaciones] = useState<Record<string, string>>({});
   const [mensaje, setMensaje] = useState<string | null>(null);
   const accessToken = useAuthStore((s) => s.accessToken);
+  const usuario = useAuthStore((s) => s.usuario);
+  const esSupervisorOCeo = usuario?.rol === Rol.SUPERVISOR || usuario?.rol === Rol.CEO;
 
   async function cargar() {
     setLeads(await api.get<Lead[]>('/leads/bolsa'));
@@ -16,6 +26,11 @@ export function Bolsa() {
 
   useEffect(() => {
     cargar();
+    // La asignación manual (sección 6) es de supervisor/CEO para arriba —
+    // el listado de vendedores solo hace falta para ese caso.
+    if (esSupervisorOCeo) {
+      api.get<UsuarioListado[]>('/usuarios').then((todos) => setVendedores(todos.filter((u) => u.rol === Rol.VENDEDOR)));
+    }
     if (!accessToken) return;
     const socket = conectarSocket(accessToken);
     // Bolsa nueva/liberada (sección 7): cualquiera de los dos eventos cambia
@@ -38,6 +53,18 @@ export function Bolsa() {
       await cargar();
     } catch (err) {
       setMensaje(err instanceof ApiError ? err.message : 'No se pudo tomar el lead');
+    }
+  }
+
+  async function asignar(leadId: string) {
+    const vendedorId = asignaciones[leadId];
+    if (!vendedorId) return;
+    setMensaje(null);
+    try {
+      await api.post(`/bolsa/${leadId}/asignar`, { vendedorId });
+      await cargar();
+    } catch (err) {
+      setMensaje(err instanceof ApiError ? err.message : 'No se pudo asignar el lead');
     }
   }
 
@@ -64,7 +91,33 @@ export function Bolsa() {
         </p>
       )}
       {leads.map((lead) => (
-        <LeadCard key={lead.id} lead={lead} accion={<button onClick={() => tomar(lead.id)}>Tomar</button>} />
+        <LeadCard
+          key={lead.id}
+          lead={lead}
+          accion={
+            <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
+              {esSupervisorOCeo && (
+                <>
+                  <select
+                    value={asignaciones[lead.id] ?? ''}
+                    onChange={(e) => setAsignaciones({ ...asignaciones, [lead.id]: e.target.value })}
+                  >
+                    <option value="">Asignar a…</option>
+                    {vendedores.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.nombre}
+                      </option>
+                    ))}
+                  </select>
+                  <button className="secundario" disabled={!asignaciones[lead.id]} onClick={() => asignar(lead.id)}>
+                    Asignar
+                  </button>
+                </>
+              )}
+              <button onClick={() => tomar(lead.id)}>Tomar</button>
+            </div>
+          }
+        />
       ))}
     </div>
   );
