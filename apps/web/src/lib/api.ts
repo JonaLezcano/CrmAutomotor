@@ -32,8 +32,12 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     throw new ApiError(res.status, body.message ?? res.statusText);
   }
 
-  if (res.status === 204) return undefined as T;
-  return res.json();
+  // Nest devuelve 200 (no 204) con body vacío cuando un handler no retorna
+  // nada — no alcanza con chequear el status code, hay que mirar si vino
+  // contenido de verdad antes de parsear como JSON.
+  const texto = await res.text();
+  if (!texto) return undefined as T;
+  return JSON.parse(texto);
 }
 
 export const api = {

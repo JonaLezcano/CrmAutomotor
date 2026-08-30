@@ -133,6 +133,7 @@ export class BolsaService {
     });
 
     this.gateway.emitLeadAsignado(tenantId, actualizado, vendedorId, false);
+    await this.notificaciones.crear(vendedorId, 'lead_asignado', { leadId });
     return actualizado;
   }
 }

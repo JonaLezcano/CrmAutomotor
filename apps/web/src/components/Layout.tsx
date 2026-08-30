@@ -2,6 +2,7 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { EstadoDisponibilidad, Rol } from '@crm/shared';
 import { useAuthStore } from '../store/auth';
 import { api } from '../lib/api';
+import { NotificationBell } from './NotificationBell';
 
 function NavLink({ to, children }: { to: string; children: React.ReactNode }) {
   const location = useLocation();
@@ -79,6 +80,8 @@ export function Layout() {
             <option value={EstadoDisponibilidad.offline}>Offline</option>
           </select>
         )}
+
+        <NotificationBell />
 
         <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>{usuario?.nombre}</span>
 

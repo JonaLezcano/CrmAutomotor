@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
@@ -15,8 +15,16 @@ export class NotificacionesService {
     return notificacion;
   }
 
-  marcarLeido(id: string) {
-    return this.prisma.notificacion.update({ where: { id }, data: { leido: true } });
+  // El id de la notificación no alcanza para autorizar: sin el filtro por
+  // usuarioId, cualquiera podría marcar como leída una notificación ajena
+  // adivinando el id.
+  async marcarLeido(id: string, usuarioId: string) {
+    const { count } = await this.prisma.notificacion.updateMany({
+      where: { id, usuarioId },
+      data: { leido: true },
+    });
+    if (count === 0) throw new ForbiddenException('Notificación inexistente o de otro usuario');
+    return this.prisma.notificacion.findUniqueOrThrow({ where: { id } });
   }
 
   findNoLeidas(usuarioId: string) {
