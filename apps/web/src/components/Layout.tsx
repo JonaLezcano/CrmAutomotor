@@ -63,6 +63,7 @@ export function Layout() {
           <NavLink to="/mis-leads">Mis leads</NavLink>
           {usuario && [Rol.SUPERVISOR, Rol.CEO].includes(usuario.rol) && <NavLink to="/equipo">Equipo</NavLink>}
           {usuario?.rol === Rol.CEO && <NavLink to="/usuarios">Usuarios</NavLink>}
+          {usuario?.rol === Rol.CEO && <NavLink to="/canales">Canales</NavLink>}
         </div>
 
         <span style={{ flex: 1 }} />

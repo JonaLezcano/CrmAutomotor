@@ -7,6 +7,7 @@ import { Bolsa } from './pages/vendedor/Bolsa';
 import { MisLeads } from './pages/vendedor/MisLeads';
 import { Dashboard as DashboardSupervisor } from './pages/supervisor/Dashboard';
 import { Usuarios } from './pages/ceo/Usuarios';
+import { Canales } from './pages/ceo/Canales';
 
 export function App() {
   return (
@@ -24,6 +25,7 @@ export function App() {
 
           <Route element={<ProtectedRoute rolMinimo={Rol.CEO} />}>
             <Route path="/usuarios" element={<Usuarios />} />
+            <Route path="/canales" element={<Canales />} />
           </Route>
         </Route>
       </Route>
