@@ -66,8 +66,10 @@ CREATE POLICY tenant_isolation_notificaciones ON notificaciones
 -- enumerar canales de otros tenants. Después de llamarla, el código SIEMPRE
 -- debe fijar app.tenant_id con el resultado antes de tocar cualquier otra tabla
 -- (ver canales.service.ts → resolveCanalParaWebhook).
-CREATE FUNCTION resolve_canal_publico(p_canal_id uuid)
-RETURNS TABLE (id uuid, tenant_id uuid, tipo "TipoCanal", activo boolean)
+-- Nota: los id son TEXT (default de Prisma para `String @id @default(uuid())`,
+-- no el tipo nativo `uuid` de Postgres), por eso la función usa text acá.
+CREATE FUNCTION resolve_canal_publico(p_canal_id text)
+RETURNS TABLE (id text, tenant_id text, tipo "TipoCanal", activo boolean)
 LANGUAGE sql
 SECURITY DEFINER
 SET search_path = public
@@ -75,5 +77,5 @@ AS $$
   SELECT id, tenant_id, tipo, activo FROM canales WHERE id = p_canal_id;
 $$;
 
-REVOKE ALL ON FUNCTION resolve_canal_publico(uuid) FROM PUBLIC;
--- GRANT EXECUTE ON FUNCTION resolve_canal_publico(uuid) TO crm_app; -- ajustar al rol real de la app
+REVOKE ALL ON FUNCTION resolve_canal_publico(text) FROM PUBLIC;
+-- GRANT EXECUTE ON FUNCTION resolve_canal_publico(text) TO crm_app; -- ajustar al rol real de la app

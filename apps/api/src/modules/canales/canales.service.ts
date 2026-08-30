@@ -32,7 +32,7 @@ export class CanalesService {
    * que se llama en cualquier handler de webhook, antes de tocar leads/eventos.
    */
   async resolveCanalParaWebhook(canalId: string) {
-    const rows = await this.prisma.$queryRaw<CanalPublico[]>`SELECT * FROM resolve_canal_publico(${canalId}::uuid)`;
+    const rows = await this.prisma.$queryRaw<CanalPublico[]>`SELECT * FROM resolve_canal_publico(${canalId}::text)`;
     const canal = rows[0];
     if (!canal || !canal.activo) throw new NotFoundException('Canal inexistente o inactivo');
 

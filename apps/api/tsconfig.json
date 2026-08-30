@@ -6,6 +6,7 @@
     "rootDir": "./src",
     "sourceMap": true,
     "incremental": true,
+    "tsBuildInfoFile": "./dist/tsconfig.tsbuildinfo",
     "allowJs": false,
     "strictNullChecks": true,
     "noImplicitAny": true,
