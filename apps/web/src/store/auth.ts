@@ -6,6 +6,7 @@ interface AuthState {
   refreshToken: string | null;
   usuario: LoginResponse['usuario'] | null;
   setSesion: (data: LoginResponse) => void;
+  setAccessToken: (accessToken: string) => void;
   logout: () => void;
 }
 
@@ -30,6 +31,14 @@ export const useAuthStore = create<AuthState>((set) => ({
     const sesion = { accessToken: data.accessToken, refreshToken: data.refreshToken, usuario: data.usuario };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(sesion));
     set(sesion);
+  },
+  // Usado por el refresh automático (api.ts) cuando el access token vence:
+  // pisa solo el access token, sin tocar el refresh token ni el usuario.
+  setAccessToken: (accessToken) => {
+    const actual = useAuthStore.getState();
+    const sesion = { accessToken, refreshToken: actual.refreshToken, usuario: actual.usuario };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(sesion));
+    set({ accessToken });
   },
   logout: () => {
     localStorage.removeItem(STORAGE_KEY);
