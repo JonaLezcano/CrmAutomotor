@@ -34,7 +34,7 @@ export function MisLeads() {
           <LeadCard
             lead={lead}
             accion={
-              <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
                 <button onClick={() => setVendiendoLeadId(lead.id === vendiendoLeadId ? null : lead.id)}>
                   Vender
                 </button>

@@ -41,6 +41,8 @@ export function Layout() {
       <nav
         style={{
           display: 'flex',
+          flexWrap: 'wrap',
+          rowGap: 'var(--space-3)',
           gap: 'var(--space-6)',
           padding: '14px var(--space-6)',
           background: 'var(--color-bg-raised)',
@@ -59,7 +61,7 @@ export function Layout() {
           CRM <span style={{ color: 'var(--color-accent)' }}>Automotor</span>
         </strong>
 
-        <div style={{ display: 'flex', gap: 'var(--space-5)' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-5)' }}>
           <NavLink to="/">Bolsa</NavLink>
           <NavLink to="/mis-leads">Mis leads</NavLink>
           {usuario && [Rol.SUPERVISOR, Rol.CEO].includes(usuario.rol) && <NavLink to="/equipo">Equipo</NavLink>}
@@ -67,36 +69,41 @@ export function Layout() {
           {usuario?.rol === Rol.CEO && <NavLink to="/canales">Canales</NavLink>}
         </div>
 
-        <span style={{ flex: 1 }} />
+        {/* marginLeft:auto en vez de un spacer flex:1 aparte: bajo flex-wrap
+            un spacer vacío con flex:1 puede terminar solo en su propia línea
+            y arrastrar todo lo de la derecha con él — así el grupo entero se
+            empuja a la derecha en pantallas anchas y baja de línea junto
+            cuando no entra. */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-4)', alignItems: 'center', marginLeft: 'auto' }}>
+          {usuario?.rol === Rol.VENDEDOR && (
+            <select
+              defaultValue={EstadoDisponibilidad.disponible}
+              onChange={(e) => toggleDisponibilidad(e.target.value as EstadoDisponibilidad)}
+            >
+              <option value={EstadoDisponibilidad.disponible}>● Disponible</option>
+              <option value={EstadoDisponibilidad.en_salon}>En salón</option>
+              <option value={EstadoDisponibilidad.en_llamada}>En llamada</option>
+              <option value={EstadoDisponibilidad.offline}>Offline</option>
+            </select>
+          )}
 
-        {usuario?.rol === Rol.VENDEDOR && (
-          <select
-            defaultValue={EstadoDisponibilidad.disponible}
-            onChange={(e) => toggleDisponibilidad(e.target.value as EstadoDisponibilidad)}
+          <NotificationBell />
+
+          <span className="nombre-usuario">{usuario?.nombre}</span>
+
+          <button
+            className="secundario"
+            onClick={async () => {
+              // Si falla (sin red, etc.) igual desloguea localmente: la cookie
+              // vencerá sola en 7 días, pero no vale la pena trabar el logout.
+              await api.post('/auth/logout').catch(() => {});
+              logout();
+              navigate('/login');
+            }}
           >
-            <option value={EstadoDisponibilidad.disponible}>● Disponible</option>
-            <option value={EstadoDisponibilidad.en_salon}>En salón</option>
-            <option value={EstadoDisponibilidad.en_llamada}>En llamada</option>
-            <option value={EstadoDisponibilidad.offline}>Offline</option>
-          </select>
-        )}
-
-        <NotificationBell />
-
-        <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>{usuario?.nombre}</span>
-
-        <button
-          className="secundario"
-          onClick={async () => {
-            // Si falla (sin red, etc.) igual desloguea localmente: la cookie
-            // vencerá sola en 7 días, pero no vale la pena trabar el logout.
-            await api.post('/auth/logout').catch(() => {});
-            logout();
-            navigate('/login');
-          }}
-        >
-          Salir
-        </button>
+            Salir
+          </button>
+        </div>
       </nav>
       <main style={{ padding: 'var(--space-6)', maxWidth: 1100, margin: '0 auto' }}>
         <Outlet />

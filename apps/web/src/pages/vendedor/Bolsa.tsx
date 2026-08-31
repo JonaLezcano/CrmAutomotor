@@ -95,7 +95,7 @@ export function Bolsa() {
           key={lead.id}
           lead={lead}
           accion={
-            <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)', alignItems: 'center' }}>
               {esSupervisorOCeo && (
                 <>
                   <select

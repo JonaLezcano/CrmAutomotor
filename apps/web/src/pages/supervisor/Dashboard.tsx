@@ -1,17 +1,19 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../lib/api';
+import { formatearMonto } from '../../lib/formato';
 
 interface ResumenTenant {
   porEstado: { estado: string; _count: number }[];
   porTemperatura: { temperatura: string; _count: number }[];
-  ventas: { cantidad: number; montoTotal: number };
+  // Llega como string (Prisma.Decimal serializado) — ver formatearMonto.
+  ventas: { cantidad: number; montoTotal: number | string };
 }
 
 interface RankingItem {
   vendedorId: string;
   nombre: string;
   cantidadVentas: number;
-  montoTotal: number;
+  montoTotal: number | string;
 }
 
 function StatTile({ eyebrow, valor, detalle }: { eyebrow: string; valor: string; detalle?: string }) {
@@ -57,7 +59,7 @@ export function Dashboard() {
         <StatTile
           eyebrow="Ventas"
           valor={String(resumen?.ventas.cantidad ?? 0)}
-          detalle={`$${(resumen?.ventas.montoTotal ?? 0).toLocaleString()}`}
+          detalle={`$${formatearMonto(resumen?.ventas.montoTotal ?? 0)}`}
         />
       </div>
 
@@ -79,7 +81,7 @@ export function Dashboard() {
                 <tr key={r.vendedorId}>
                   <td>{r.nombre}</td>
                   <td style={{ fontFamily: 'var(--font-mono)' }}>{r.cantidadVentas}</td>
-                  <td style={{ fontFamily: 'var(--font-mono)' }}>${r.montoTotal.toLocaleString()}</td>
+                  <td style={{ fontFamily: 'var(--font-mono)' }}>${formatearMonto(r.montoTotal)}</td>
                 </tr>
               ))}
             </tbody>

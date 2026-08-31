@@ -14,6 +14,7 @@ Todas las secciones 1-8 del documento están implementadas y **verificadas en vi
 - Notificaciones real-time por WebSocket (salas por tenant) + **Web Push real** (VAPID, service worker, suscripción por dispositivo desde la campanita del header).
 - **Row Level Security multi-tenant como barrera real**, no decorativa: roles de Postgres separados (`crm_app` sin BYPASSRLS para requests HTTP, `crm_system` con BYPASSRLS solo para los `@Cron` de sistema) + transacción por request vía `AsyncLocalStorage` (ver `prisma/roles.sql`, `prisma/rls.sql`, `prisma.service.ts`). Probado con un segundo tenant real: cero visibilidad cruzada de canales/leads/usuarios por HTTP.
 - **Refresh token en cookie httpOnly** (nunca en el body ni en localStorage): el access token vive solo en memoria y se resuelve solo con un refresh silencioso al recargar la página — verificado con Playwright que ni el refresh ni el access token quedan expuestos en `localStorage`.
+- **Sistema visual propio** (tema tablero de auto — la temperatura de un lead es literalmente una luz de tablero, ver `styles/global.css` y `Gauge.tsx`), con nav y cards responsive (se probó en 390px de ancho) y montos formateados en es-AR.
 
 ## Primeros pasos
 
@@ -68,7 +69,4 @@ Estos son parámetros que el documento deja abiertos ("pendiente de definir con 
 
 ## Próximos roles (sección 10 del documento)
 
-Con RLS real, push, la cobertura e2e y el refresh token en cookie httpOnly ya cerrados, lo que queda es puramente de superficie:
-
-- **UX/UI**: el frontend es funcional pero sin diseño (estilos inline mínimos); definir el sistema visual real, empezando por los colores de temperatura de sección 9.5.
-- **Backend/Frontend**: profundizar cada módulo (paginación, filtros, manejo de errores más fino).
+Con RLS real, push, la cobertura e2e, el refresh token en cookie httpOnly y el pulido de UX ya cerrados, lo que queda es profundizar cada módulo (paginación, filtros, manejo de errores más fino) — no hay ningún punto de arquitectura pendiente.

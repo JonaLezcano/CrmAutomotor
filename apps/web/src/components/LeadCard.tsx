@@ -17,6 +17,7 @@ export function LeadCard({ lead, accion }: { lead: Lead; accion?: React.ReactNod
         borderRadius: 'var(--radius-md)',
         padding: 'var(--space-4)',
         display: 'flex',
+        flexWrap: 'wrap',
         justifyContent: 'space-between',
         alignItems: 'center',
         gap: 'var(--space-4)',

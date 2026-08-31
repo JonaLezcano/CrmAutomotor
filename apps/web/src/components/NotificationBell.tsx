@@ -4,6 +4,7 @@ import { api } from '../lib/api';
 import { conectarSocket } from '../lib/socket';
 import { useAuthStore } from '../store/auth';
 import { activarPush, desactivarPush, soportaPush, suscripcionActual } from '../lib/push';
+import { BellIcon } from './BellIcon';
 
 interface Notificacion {
   id: string;
@@ -83,9 +84,9 @@ export function NotificationBell() {
         className="secundario"
         onClick={() => setAbierto((v) => !v)}
         aria-label={`Notificaciones${notificaciones.length > 0 ? ` (${notificaciones.length} sin leer)` : ''}`}
-        style={{ position: 'relative', padding: '9px 12px' }}
+        style={{ position: 'relative', padding: '9px 12px', display: 'flex', alignItems: 'center' }}
       >
-        🔔
+        <BellIcon />
         {notificaciones.length > 0 && (
           <span
             style={{

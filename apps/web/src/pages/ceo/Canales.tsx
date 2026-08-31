@@ -114,6 +114,7 @@ export function Canales() {
               key={canal.id}
               style={{
                 display: 'flex',
+                flexWrap: 'wrap',
                 alignItems: 'center',
                 gap: 'var(--space-3)',
                 background: 'var(--color-bg-raised)',
@@ -138,6 +139,7 @@ export function Canales() {
                   fontSize: 12,
                   color: 'var(--color-text-muted)',
                   flex: 1,
+                  minWidth: 200,
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',

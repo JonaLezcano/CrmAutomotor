@@ -177,6 +177,20 @@ button.secundario:hover {
   outline-offset: 2px;
 }
 
+/* El nombre del usuario logueado (Layout.tsx) es el ítem menos esencial del
+   header — se saca primero en pantallas chicas para que la navegación y las
+   acciones (campanita, salir) no se aprieten. */
+.nombre-usuario {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 640px) {
+  .nombre-usuario {
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.001ms !important;
