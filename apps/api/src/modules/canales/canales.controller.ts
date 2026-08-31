@@ -7,12 +7,14 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { CanalesService } from './canales.service';
 import { CreateCanalDto } from './dto/create-canal.dto';
 import { LeadsService } from '../leads/leads.service';
+import { PrismaService } from '../../prisma/prisma.service';
 
 @Controller('canales')
 export class CanalesController {
   constructor(
     private canalesService: CanalesService,
     private leadsService: LeadsService,
+    private prisma: PrismaService,
   ) {}
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -44,13 +46,16 @@ export class CanalesController {
   }
 
   // Punto único de entrada de leads de cualquier canal (sección 5, paso 1).
-  // Sin JWT: la identidad viene del canalId de la URL (unguessable UUID),
-  // resolveCanalParaWebhook además fija el tenant context para RLS.
+  // Sin JWT: la identidad viene del canalId de la URL (unguessable UUID).
+  // Una vez resuelto el tenant, la ingesta corre en su propia transacción
+  // con `SET LOCAL app.tenant_id` (mismo mecanismo que usa
+  // TenantContextInterceptor para requests autenticados) — así RLS aplica
+  // también acá, no solo en el resto de la app.
   @Post('webhook/:canalId')
   async recibirWebhook(@Param('canalId') canalId: string, @Body() body: Record<string, any>) {
     const canal = await this.canalesService.resolveCanalParaWebhook(canalId);
     const normalizado = this.normalizar(canal.tipo, body);
-    return this.leadsService.ingest(canal.tenantId, canal.id, normalizado);
+    return this.prisma.ejecutarComoTenant(canal.tenantId, () => this.leadsService.ingest(canal.tenantId, canal.id, normalizado));
   }
 
   /** Cada canal manda un shape distinto; acá se homogeneiza a {telefono,nombre,mensaje}. */

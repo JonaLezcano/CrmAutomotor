@@ -27,16 +27,21 @@ export class CanalesService {
   }
 
   /**
-   * Resuelve el canal de un webhook y deja fijado app.tenant_id para el resto
-   * del request (ver rls.sql → resolve_canal_publico). Debe ser lo primero
-   * que se llama en cualquier handler de webhook, antes de tocar leads/eventos.
+   * Resuelve el canal de un webhook sin JWT/tenant context todavía (ver
+   * rls.sql → resolve_canal_publico). Quien llama a esto debe envolver
+   * cualquier escritura que haga después en `prisma.ejecutarComoTenant(...)`
+   * con el tenantId devuelto acá — ver canales.controller.ts. Antes esta
+   * función intentaba fijar app.tenant_id "para el resto del request" con
+   * setTenantContext, pero eso nunca fue confiable (el SET LOCAL vive en la
+   * transacción implícita de esa sola sentencia, no en las queries
+   * siguientes); quedó demostrado con RLS ya activo de verdad: bloqueaba
+   * la ingesta con "new row violates row-level security policy".
    */
   async resolveCanalParaWebhook(canalId: string) {
     const rows = await this.prisma.$queryRaw<CanalPublico[]>`SELECT * FROM resolve_canal_publico(${canalId}::text)`;
     const canal = rows[0];
     if (!canal || !canal.activo) throw new NotFoundException('Canal inexistente o inactivo');
 
-    await this.prisma.setTenantContext(canal.tenant_id);
     return { id: canal.id, tenantId: canal.tenant_id, tipo: canal.tipo };
   }
 }

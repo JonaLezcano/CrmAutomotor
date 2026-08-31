@@ -125,13 +125,18 @@ model Lead {
 model LeadEvento {
   id        String   @id @default(uuid())
   leadId    String   @map("lead_id")
-  usuarioId String   @map("usuario_id")
+  // Nullable: la ingesta de un lead nuevo (sección 5, paso 1) todavía no
+  // tiene un vendedor asignado — es un evento generado por el sistema, sin
+  // usuario humano detrás. Antes esto se resolvía pasando un id inventado
+  // (lead.id) que violaba la FK y abortaba la transacción entera en
+  // silencio una vez que RLS pasó a correr todo un request en una sola tx.
+  usuarioId String?  @map("usuario_id")
   accion    String
   detalle   String?
   timestamp DateTime @default(now())
 
-  lead    Lead    @relation(fields: [leadId], references: [id])
-  usuario Usuario @relation(fields: [usuarioId], references: [id])
+  lead    Lead     @relation(fields: [leadId], references: [id])
+  usuario Usuario? @relation(fields: [usuarioId], references: [id])
 
   @@index([leadId])
   @@map("lead_eventos")

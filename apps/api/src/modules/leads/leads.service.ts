@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { EstadoLead } from '@crm/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScoringService } from '../scoring/scoring.service';
@@ -15,8 +15,6 @@ const TIMER_BOLSA_MINUTOS = 15;
 
 @Injectable()
 export class LeadsService {
-  private readonly logger = new Logger(LeadsService.name);
-
   constructor(
     private prisma: PrismaService,
     private scoringService: ScoringService,
@@ -63,17 +61,19 @@ export class LeadsService {
           },
         });
 
+    // Sin usuarioId: la ingesta todavía no tiene un vendedor asignado (recién
+    // entra a la bolsa), es un evento de sistema. Antes esto se rellenaba con
+    // un id inventado (lead.id) que violaba la FK a usuarios — con RLS
+    // corriendo todo el request en una sola transacción (ver
+    // TenantContextInterceptor), ese error abortaba y revertía TODA la
+    // ingesta en silencio, aunque el catch de acá abajo lo tapara a nivel JS.
     await this.prisma.leadEvento.create({
       data: {
         leadId: lead.id,
-        usuarioId: lead.vendedorAsignadoId ?? lead.id, // sin usuario humano todavía; ver nota abajo
+        usuarioId: lead.vendedorAsignadoId,
         accion: existente ? 'reingreso_bolsa' : 'ingesta',
         detalle: `canal=${canalId} temperatura=${temperatura} score=${score}`,
       },
-    }).catch((err) => {
-      // lead_eventos.usuario_id no admite un id que no exista en usuarios; hasta
-      // que haya un "usuario sistema" seed, esto se loguea y no bloquea la ingesta.
-      this.logger.warn(`No se pudo loguear evento de ingesta para lead ${lead.id}: ${err.message}`);
     });
 
     this.notificaciones.emitLeadNuevo(tenantId, lead);

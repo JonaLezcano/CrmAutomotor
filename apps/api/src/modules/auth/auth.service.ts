@@ -5,6 +5,14 @@ import * as bcrypt from 'bcrypt';
 import { JwtPayload, LoginResponse, Rol } from '@crm/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 
+interface UsuarioLogin {
+  id: string;
+  tenant_id: string;
+  nombre: string;
+  password_hash: string;
+  rol: Rol;
+}
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -14,18 +22,21 @@ export class AuthService {
   ) {}
 
   async login(usuario: string, password: string): Promise<LoginResponse> {
-    // Nota: consulta corre sin tenant context todavía (es el paso previo a tener JWT),
-    // por eso `usuario` es único a nivel global y no se filtra por tenant acá.
-    const u = await this.prisma.usuario.findUnique({ where: { usuario } });
+    // Sin JWT todavía (es el paso previo a tener uno), así que no hay
+    // app.tenant_id fijado en la conexión — bajo RLS estricto, un
+    // `findUnique` normal devolvería 0 filas aunque el usuario exista
+    // (huevo y gallina, igual que resolve_canal_publico en el webhook).
+    // Esta función SECURITY DEFINER es la única forma autorizada de buscar
+    // por `usuario` (único a nivel global a propósito, sección 4) sin
+    // contexto de tenant. Ver rls.sql.
+    const rows = await this.prisma.$queryRaw<UsuarioLogin[]>`SELECT * FROM resolve_usuario_login(${usuario}::text)`;
+    const u = rows[0];
     if (!u) throw new UnauthorizedException('Usuario o contraseña incorrectos');
 
-    const passwordOk = await bcrypt.compare(password, u.passwordHash);
+    const passwordOk = await bcrypt.compare(password, u.password_hash);
     if (!passwordOk) throw new UnauthorizedException('Usuario o contraseña incorrectos');
 
-    // Prisma tipa u.rol contra su propio enum generado desde schema.prisma;
-    // los valores coinciden 1:1 con @crm/shared Rol (mismo string), pero TS
-    // los ve como tipos nominales distintos, de ahí el cast.
-    const payload: JwtPayload = { sub: u.id, tenantId: u.tenantId, rol: u.rol as Rol };
+    const payload: JwtPayload = { sub: u.id, tenantId: u.tenant_id, rol: u.rol };
 
     const accessToken = this.jwt.sign(payload, {
       secret: this.config.get('JWT_ACCESS_SECRET'),
@@ -39,7 +50,7 @@ export class AuthService {
     return {
       accessToken,
       refreshToken,
-      usuario: { id: u.id, nombre: u.nombre, rol: u.rol as Rol, tenantId: u.tenantId },
+      usuario: { id: u.id, nombre: u.nombre, rol: u.rol, tenantId: u.tenant_id },
     };
   }
 
