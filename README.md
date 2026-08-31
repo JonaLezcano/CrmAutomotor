@@ -35,6 +35,28 @@ npm run dev:api                    # http://localhost:3001/api
 npm run dev:web                    # http://localhost:5173, login admin/admin1234
 ```
 
+## Tests
+
+`npm test --workspace=apps/api` corre los 17 tests unitarios (scoring, roles, dedup).
+
+Los tests end-to-end pegan por HTTP real (supertest) contra Postgres real, con RLS
+y roles de Postgres aplicados — cubren el flujo completo de la sección 5
+(ingesta → dedup → scoring → bolsa con lock optimista → asignación → venta),
+aislamiento entre tenants, y una regresión específica del cron de
+auto-asignación bajo RLS real. Corren contra una base separada
+(`crm_automotor_test`) para no tocar los datos de desarrollo:
+
+```bash
+docker exec crm-postgres psql -U crm -d postgres -c "CREATE DATABASE crm_automotor_test OWNER crm;"  # una sola vez
+
+cd apps/api
+DATABASE_URL="postgresql://crm:crm_dev_password@localhost:5432/crm_automotor_test?schema=public" npx prisma migrate deploy
+docker exec -i crm-postgres psql -U crm -d crm_automotor_test < prisma/rls.sql
+docker exec -i crm-postgres psql -U crm -d crm_automotor_test < prisma/roles.sql
+
+npm run test:e2e                   # apps/api/.env.test ya trae credenciales de test propias
+```
+
 ## Pendientes explícitos (marcados en el código con TODO)
 
 Estos son parámetros que el documento deja abiertos ("pendiente de definir con Jona") o gaps reales encontrados al implementar — no son bugs, son decisiones que faltan:
@@ -46,9 +68,8 @@ Estos son parámetros que el documento deja abiertos ("pendiente de definir con 
 
 ## Próximos roles (sección 10 del documento)
 
-Con RLS real y push ya cerrados, lo que queda es más acotado:
+Con RLS real, push y la cobertura e2e ya cerrados, lo que queda es más acotado:
 
-- **QA**: escribir tests del flujo completo (ingesta → dedup → scoring → bolsa → asignación → venta); hoy solo hay 17 tests unitarios (scoring, roles, un pedazo de leads), sin cobertura end-to-end.
 - **Seguridad**: punto 4 de arriba (JWT en localStorage → evaluar cookie httpOnly) antes de producción.
 - **UX/UI**: el frontend es funcional pero sin diseño (estilos inline mínimos); definir el sistema visual real, empezando por los colores de temperatura de sección 9.5.
 - **Backend/Frontend**: profundizar cada módulo (paginación, filtros, manejo de errores más fino).

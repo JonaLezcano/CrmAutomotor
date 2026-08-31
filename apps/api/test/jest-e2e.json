@@ -1,0 +1,13 @@
+{
+  "rootDir": "..",
+  "testRegex": "test/.*\\.e2e-spec\\.ts$",
+  "transform": {
+    "^.+\\.ts$": "ts-jest"
+  },
+  "moduleNameMapper": {
+    "^@crm/shared$": "<rootDir>/../../packages/shared/src/index.ts"
+  },
+  "setupFiles": ["<rootDir>/test/setup-env.ts"],
+  "testTimeout": 20000,
+  "maxWorkers": 1
+}
