@@ -72,11 +72,12 @@ model Usuario {
   estadoDisponibilidad EstadoDisponibilidad @default(offline) @map("estado_disponibilidad")
   fechaAlta            DateTime             @default(now()) @map("fecha_alta")
 
-  tenant         Tenant         @relation(fields: [tenantId], references: [id])
-  leadsAsignados Lead[]         @relation("VendedorAsignado")
-  leadEventos    LeadEvento[]
-  ventas         Venta[]
-  notificaciones Notificacion[]
+  tenant            Tenant             @relation(fields: [tenantId], references: [id])
+  leadsAsignados    Lead[]             @relation("VendedorAsignado")
+  leadEventos       LeadEvento[]
+  ventas            Venta[]
+  notificaciones    Notificacion[]
+  pushSuscripciones PushSuscripcion[]
 
   @@index([tenantId])
   @@map("usuarios")
@@ -185,4 +186,20 @@ model Notificacion {
 
   @@index([usuarioId, leido])
   @@map("notificaciones")
+}
+
+// Suscripción Web Push del navegador (sección 2 y 7): un usuario puede tener
+// varias (una por dispositivo/navegador donde aceptó notificaciones).
+model PushSuscripcion {
+  id        String   @id @default(uuid())
+  usuarioId String   @map("usuario_id")
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  fechaAlta DateTime @default(now()) @map("fecha_alta")
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id])
+
+  @@index([usuarioId])
+  @@map("push_suscripciones")
 }

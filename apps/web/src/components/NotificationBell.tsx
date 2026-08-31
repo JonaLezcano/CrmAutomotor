@@ -3,6 +3,7 @@ import { SocketEvent } from '@crm/shared';
 import { api } from '../lib/api';
 import { conectarSocket } from '../lib/socket';
 import { useAuthStore } from '../store/auth';
+import { activarPush, desactivarPush, soportaPush, suscripcionActual } from '../lib/push';
 
 interface Notificacion {
   id: string;
@@ -18,11 +19,36 @@ const MENSAJE_TIPO: Record<string, string> = {
 export function NotificationBell() {
   const [notificaciones, setNotificaciones] = useState<Notificacion[]>([]);
   const [abierto, setAbierto] = useState(false);
+  const [pushActivo, setPushActivo] = useState(false);
+  const [cambiandoPush, setCambiandoPush] = useState(false);
   const contenedorRef = useRef<HTMLDivElement>(null);
   const accessToken = useAuthStore((s) => s.accessToken);
 
   async function cargar() {
     setNotificaciones(await api.get<Notificacion[]>('/notificaciones'));
+  }
+
+  useEffect(() => {
+    if (!soportaPush()) return;
+    suscripcionActual().then((sub) => setPushActivo(sub !== null));
+  }, []);
+
+  async function toggleAvisosPush() {
+    setCambiandoPush(true);
+    try {
+      if (pushActivo) {
+        await desactivarPush();
+        setPushActivo(false);
+      } else {
+        const resultado = await activarPush();
+        setPushActivo(resultado === 'activado');
+        if (resultado === 'rechazado') {
+          alert('Bloqueaste los avisos en el navegador — para activarlos hay que habilitarlos desde la configuración del sitio.');
+        }
+      }
+    } finally {
+      setCambiandoPush(false);
+    }
   }
 
   useEffect(() => {
@@ -100,6 +126,29 @@ export function NotificationBell() {
             overflowY: 'auto',
           }}
         >
+          {soportaPush() && (
+            <button
+              onClick={toggleAvisosPush}
+              disabled={cambiandoPush}
+              style={{
+                display: 'block',
+                width: '100%',
+                textAlign: 'left',
+                background: 'transparent',
+                color: 'var(--color-text-muted)',
+                border: 'none',
+                borderBottom: '1px solid var(--color-border)',
+                padding: 'var(--space-3)',
+                fontSize: 12,
+                fontWeight: 400,
+                cursor: cambiandoPush ? 'default' : 'pointer',
+                opacity: cambiandoPush ? 0.6 : 1,
+              }}
+            >
+              {pushActivo ? '✓ Avisos push activados (tocá para desactivar)' : 'Activar avisos push del navegador'}
+            </button>
+          )}
+
           {notificaciones.length === 0 ? (
             <p style={{ padding: 'var(--space-4)', color: 'var(--color-text-muted)', fontSize: 13 }}>
               No tenés notificaciones nuevas.
