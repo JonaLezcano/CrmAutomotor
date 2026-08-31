@@ -76,8 +76,11 @@ async function request<T>(path: string, options: RequestInit = {}, esReintento =
   }
 
   if (!res.ok) {
-    const body = await parsearBody<{ message?: string }>(res).catch(() => ({ message: undefined }));
-    throw new ApiError(res.status, body.message ?? res.statusText);
+    // El ValidationPipe del backend puede mandar varios errores a la vez
+    // (uno por campo) como array de strings, no solo uno.
+    const body = await parsearBody<{ message?: string | string[] }>(res).catch(() => ({ message: undefined }));
+    const mensaje = Array.isArray(body.message) ? body.message.join(' — ') : body.message;
+    throw new ApiError(res.status, mensaje ?? res.statusText);
   }
 
   return parsearBody<T>(res);

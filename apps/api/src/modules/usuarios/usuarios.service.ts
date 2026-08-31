@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { EstadoDisponibilidad } from '@crm/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthService } from '../auth/auth.service';
@@ -14,19 +15,30 @@ export class UsuariosService {
   // Alta de usuarios: exclusiva de CEO (sección 6), guardia se aplica en el controller.
   async create(tenantId: string, dto: CreateUsuarioDto) {
     const passwordHash = await this.authService.hashPassword(dto.password);
-    return this.prisma.usuario.create({
-      data: {
-        tenantId,
-        nombre: dto.nombre,
-        dni: dto.dni,
-        telefono: dto.telefono,
-        sector: dto.sector,
-        usuario: dto.usuario,
-        passwordHash,
-        rol: dto.rol,
-      },
-      select: { id: true, nombre: true, usuario: true, rol: true, tenantId: true },
-    });
+    try {
+      return await this.prisma.usuario.create({
+        data: {
+          tenantId,
+          nombre: dto.nombre,
+          dni: dto.dni,
+          telefono: dto.telefono,
+          sector: dto.sector,
+          usuario: dto.usuario,
+          passwordHash,
+          rol: dto.rol,
+        },
+        select: { id: true, nombre: true, usuario: true, rol: true, tenantId: true },
+      });
+    } catch (err) {
+      // `usuario` es único a nivel global (sección 4, necesario para el
+      // login sin tenant todavía) — sin este catch, elegir un nombre ya
+      // tomado (de cualquier concesionaria) tiraba un 500 genérico en vez
+      // de decir cuál es el problema real.
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+        throw new ConflictException(`El usuario "${dto.usuario}" ya está en uso`);
+      }
+      throw err;
+    }
   }
 
   findByTenant(tenantId: string) {
