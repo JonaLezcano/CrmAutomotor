@@ -28,6 +28,7 @@ ALTER TABLE scoring_reglas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ventas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notificaciones ENABLE ROW LEVEL SECURITY;
 ALTER TABLE push_suscripciones ENABLE ROW LEVEL SECURITY;
+ALTER TABLE inversiones_canal ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS tenant_isolation_usuarios ON usuarios;
 CREATE POLICY tenant_isolation_usuarios ON usuarios
@@ -43,6 +44,10 @@ CREATE POLICY tenant_isolation_leads ON leads
 
 DROP POLICY IF EXISTS tenant_isolation_scoring_reglas ON scoring_reglas;
 CREATE POLICY tenant_isolation_scoring_reglas ON scoring_reglas
+  USING (tenant_id::text = current_setting('app.tenant_id', true));
+
+DROP POLICY IF EXISTS tenant_isolation_inversiones_canal ON inversiones_canal;
+CREATE POLICY tenant_isolation_inversiones_canal ON inversiones_canal
   USING (tenant_id::text = current_setting('app.tenant_id', true));
 
 -- lead_eventos, ventas y notificaciones no tienen tenant_id propio: heredan el

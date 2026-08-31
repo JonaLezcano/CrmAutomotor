@@ -15,6 +15,7 @@ Todas las secciones 1-8 del documento están implementadas y **verificadas en vi
 - **Row Level Security multi-tenant como barrera real**, no decorativa: roles de Postgres separados (`crm_app` sin BYPASSRLS para requests HTTP, `crm_system` con BYPASSRLS solo para los `@Cron` de sistema) + transacción por request vía `AsyncLocalStorage` (ver `prisma/roles.sql`, `prisma/rls.sql`, `prisma.service.ts`). Probado con un segundo tenant real: cero visibilidad cruzada de canales/leads/usuarios por HTTP.
 - **Refresh token en cookie httpOnly** (nunca en el body ni en localStorage): el access token vive solo en memoria y se resuelve solo con un refresh silencioso al recargar la página — verificado con Playwright que ni el refresh ni el access token quedan expuestos en `localStorage`.
 - **Sistema visual propio** (tema tablero de auto — la temperatura de un lead es literalmente una luz de tablero, ver `styles/global.css` y `Gauge.tsx`), con nav y cards responsive (se probó en 390px de ancho) y montos formateados en es-AR.
+- **Panel de equipo ampliado**: leads por canal, disponibilidad del equipo en vivo, tasa de conversión y tendencia de ventas (14 días) para supervisor+. Para CEO además hay **inversión por canal** (carga manual, no hay integración con Meta/Google Ads todavía) cruzada contra leads/ventas del mes para CPL/CPA/ROAS — es la única parte del panel con datos de plata, por eso queda atrás de un `@Roles(Rol.CEO)` aparte del resto de `/reportes` (supervisor+).
 
 ## Primeros pasos
 

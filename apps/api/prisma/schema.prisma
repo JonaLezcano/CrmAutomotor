@@ -51,10 +51,11 @@ model Tenant {
   plan      String
   fechaAlta DateTime @default(now()) @map("fecha_alta")
 
-  usuarios      Usuario[]
-  canales       Canal[]
-  leads         Lead[]
-  scoringReglas ScoringRegla[]
+  usuarios         Usuario[]
+  canales          Canal[]
+  leads            Lead[]
+  scoringReglas    ScoringRegla[]
+  inversionesCanal InversionCanal[]
 
   @@map("tenants")
 }
@@ -186,6 +187,30 @@ model Notificacion {
 
   @@index([usuarioId, leido])
   @@map("notificaciones")
+}
+
+// Inversión publicitaria manual por tipo de canal y mes (CEO-only, sección
+// 6/10 — panel de resultados). No hay integración real con Meta/Google Ads
+// todavía: el CEO carga el gasto a mano, y CPA/ROAS se calculan cruzando
+// esto contra los leads/ventas de ese mes agrupados por canal.tipo. Es por
+// TIPO de canal, no por canal individual — un tenant puede tener 2 canales
+// "web" y la inversión de Instagram, por ejemplo, es una sola aunque hubiera
+// varios canales de ese tipo.
+model InversionCanal {
+  id       String    @id @default(uuid())
+  tenantId String    @map("tenant_id")
+  tipo     TipoCanal
+  // "YYYY-MM" — string simple en vez de DateTime para no lidiar con
+  // timezones al agrupar por mes calendario.
+  periodo  String
+  monto    Decimal   @db.Decimal(12, 2)
+  creadoEn DateTime  @default(now()) @map("creado_en")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, tipo, periodo])
+  @@index([tenantId])
+  @@map("inversiones_canal")
 }
 
 // Suscripción Web Push del navegador (sección 2 y 7): un usuario puede tener
