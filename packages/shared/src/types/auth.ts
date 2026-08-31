@@ -13,7 +13,8 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   accessToken: string;
-  refreshToken: string;
+  // El refresh token viaja en una cookie httpOnly (ver auth.controller.ts),
+  // nunca en el body — así no queda expuesto a XSS vía localStorage.
   usuario: {
     id: string;
     nombre: string;

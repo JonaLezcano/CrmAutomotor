@@ -87,7 +87,10 @@ export function Layout() {
 
         <button
           className="secundario"
-          onClick={() => {
+          onClick={async () => {
+            // Si falla (sin red, etc.) igual desloguea localmente: la cookie
+            // vencerá sola en 7 días, pero no vale la pena trabar el logout.
+            await api.post('/auth/logout').catch(() => {});
             logout();
             navigate('/login');
           }}

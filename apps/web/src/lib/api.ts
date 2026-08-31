@@ -19,14 +19,12 @@ async function refrescarAccessToken(): Promise<string | null> {
   if (refrescoEnCurso) return refrescoEnCurso;
 
   refrescoEnCurso = (async () => {
-    const { refreshToken } = useAuthStore.getState();
-    if (!refreshToken) return null;
-
     try {
+      // El refresh token viaja solo en la cookie httpOnly (nunca en JS) —
+      // credentials:'include' es lo que hace que el browser la mande sola.
       const res = await fetch(`${BASE_URL}/auth/refresh`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken }),
+        credentials: 'include',
       });
       if (!res.ok) return null;
 
@@ -59,6 +57,7 @@ async function request<T>(path: string, options: RequestInit = {}, esReintento =
 
   const res = await fetch(`${BASE_URL}${path}`, {
     ...options,
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
       ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),

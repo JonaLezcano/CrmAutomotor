@@ -13,6 +13,13 @@ interface UsuarioLogin {
   rol: Rol;
 }
 
+// A diferencia de LoginResponse (lo que efectivamente sale por HTTP), acá
+// adentro sigue haciendo falta el refreshToken en texto plano: el controller
+// lo saca de esto para meterlo en la cookie httpOnly, nunca en el body.
+interface ResultadoLogin extends LoginResponse {
+  refreshToken: string;
+}
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -21,7 +28,7 @@ export class AuthService {
     private config: ConfigService,
   ) {}
 
-  async login(usuario: string, password: string): Promise<LoginResponse> {
+  async login(usuario: string, password: string): Promise<ResultadoLogin> {
     // Sin JWT todavía (es el paso previo a tener uno), así que no hay
     // app.tenant_id fijado en la conexión — bajo RLS estricto, un
     // `findUnique` normal devolvería 0 filas aunque el usuario exista

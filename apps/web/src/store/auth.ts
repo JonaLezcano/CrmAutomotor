@@ -3,45 +3,40 @@ import { LoginResponse } from '@crm/shared';
 
 interface AuthState {
   accessToken: string | null;
-  refreshToken: string | null;
   usuario: LoginResponse['usuario'] | null;
   setSesion: (data: LoginResponse) => void;
   setAccessToken: (accessToken: string) => void;
   logout: () => void;
 }
 
-// TODO(seguridad, sección 10): localStorage es legible por cualquier script
-// que corra en la página (riesgo de robo de token vía XSS). Evaluar mover a
-// cookie httpOnly + SameSite antes de producción.
-const STORAGE_KEY = 'crm_auth';
+// El refresh token vive en una cookie httpOnly (ver auth.controller.ts) —
+// nunca pasa por acá, así que un XSS no puede robarlo leyendo localStorage.
+// El access token (vida corta, 15min) queda solo en memoria: se resuelve al
+// vuelo con un refresh silencioso (api.ts) la primera vez que hace falta
+// después de recargar la página, en vez de persistirse.
+const STORAGE_KEY = 'crm_auth_usuario';
 
-function cargarInicial(): Pick<AuthState, 'accessToken' | 'refreshToken' | 'usuario'> {
+function cargarUsuarioInicial(): LoginResponse['usuario'] | null {
   const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return { accessToken: null, refreshToken: null, usuario: null };
+  if (!raw) return null;
   try {
     return JSON.parse(raw);
   } catch {
-    return { accessToken: null, refreshToken: null, usuario: null };
+    return null;
   }
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
-  ...cargarInicial(),
+  accessToken: null,
+  usuario: cargarUsuarioInicial(),
   setSesion: (data) => {
-    const sesion = { accessToken: data.accessToken, refreshToken: data.refreshToken, usuario: data.usuario };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(sesion));
-    set(sesion);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data.usuario));
+    set({ accessToken: data.accessToken, usuario: data.usuario });
   },
-  // Usado por el refresh automático (api.ts) cuando el access token vence:
-  // pisa solo el access token, sin tocar el refresh token ni el usuario.
-  setAccessToken: (accessToken) => {
-    const actual = useAuthStore.getState();
-    const sesion = { accessToken, refreshToken: actual.refreshToken, usuario: actual.usuario };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(sesion));
-    set({ accessToken });
-  },
+  // Usado por el refresh automático (api.ts) cuando el access token vence.
+  setAccessToken: (accessToken) => set({ accessToken }),
   logout: () => {
     localStorage.removeItem(STORAGE_KEY);
-    set({ accessToken: null, refreshToken: null, usuario: null });
+    set({ accessToken: null, usuario: null });
   },
 }));

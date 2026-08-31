@@ -32,6 +32,67 @@ describe('Flujo completo: ingesta → dedup → scoring → bolsa → venta', ()
     return res.body as { accessToken: string; usuario: { id: string; rol: string; tenantId: string } };
   }
 
+  function extraerCookieRefresh(headers: Record<string, unknown>): string | undefined {
+    const setCookie = headers['set-cookie'] as string[] | undefined;
+    return setCookie?.find((c) => c.startsWith('refreshToken='));
+  }
+
+  // El header `Cookie` de un request solo lleva pares name=value, nunca los
+  // atributos (Path/Expires/HttpOnly/SameSite) que sí trae el Set-Cookie de
+  // la respuesta — hay que cortar en el primer ";" antes de reenviarla.
+  function soloNombreValor(setCookie: string): string {
+    return setCookie.split(';')[0];
+  }
+
+  describe('Auth: refresh token en cookie httpOnly (sección 10, seguridad)', () => {
+    it('login no manda el refresh token en el body, solo en una cookie httpOnly', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/auth/login')
+        .send({ usuario: tenant.ceo.usuario, password: tenant.ceo.password });
+
+      expect(res.status).toBe(200);
+      expect(res.body.accessToken).toEqual(expect.any(String));
+      expect(res.body.refreshToken).toBeUndefined();
+
+      const cookie = extraerCookieRefresh(res.headers);
+      expect(cookie).toBeDefined();
+      expect(cookie).toMatch(/HttpOnly/i);
+    });
+
+    it('con la cookie del login, /auth/refresh devuelve un access token nuevo', async () => {
+      const login = await request(app.getHttpServer())
+        .post('/api/auth/login')
+        .send({ usuario: tenant.ceo.usuario, password: tenant.ceo.password });
+      const cookieRefresh = soloNombreValor(extraerCookieRefresh(login.headers) as string);
+
+      const refresh = await request(app.getHttpServer()).post('/api/auth/refresh').set('Cookie', cookieRefresh);
+
+      expect(refresh.status).toBe(200);
+      expect(refresh.body.accessToken).toEqual(expect.any(String));
+
+      // No compara con el access token del login: si ambos se emiten dentro
+      // del mismo segundo, el JWT sale byte a byte igual (mismo iat) — no es
+      // un bug. Lo que hay que probar es que el token del refresh sirve de
+      // verdad contra un endpoint protegido.
+      const usuarios = await request(app.getHttpServer())
+        .get('/api/usuarios')
+        .set('Authorization', `Bearer ${refresh.body.accessToken}`);
+      expect(usuarios.status).toBe(200);
+    });
+
+    it('sin la cookie, /auth/refresh devuelve 401', async () => {
+      const refresh = await request(app.getHttpServer()).post('/api/auth/refresh');
+      expect(refresh.status).toBe(401);
+    });
+
+    it('logout limpia la cookie (Set-Cookie con expiración pasada)', async () => {
+      const res = await request(app.getHttpServer()).post('/api/auth/logout');
+      expect(res.status).toBe(200);
+      const cookie = extraerCookieRefresh(res.headers);
+      expect(cookie).toMatch(/Expires=Thu, 01 Jan 1970/i);
+    });
+  });
+
   describe('Ingesta multi-canal + dedup + scoring', () => {
     const telefono = '+5491100000001';
     let leadId: string;

@@ -13,6 +13,7 @@ Todas las secciones 1-8 del documento están implementadas y **verificadas en vi
 - Ventas cerrando el ciclo del lead, reportes agregados para supervisor/CEO.
 - Notificaciones real-time por WebSocket (salas por tenant) + **Web Push real** (VAPID, service worker, suscripción por dispositivo desde la campanita del header).
 - **Row Level Security multi-tenant como barrera real**, no decorativa: roles de Postgres separados (`crm_app` sin BYPASSRLS para requests HTTP, `crm_system` con BYPASSRLS solo para los `@Cron` de sistema) + transacción por request vía `AsyncLocalStorage` (ver `prisma/roles.sql`, `prisma/rls.sql`, `prisma.service.ts`). Probado con un segundo tenant real: cero visibilidad cruzada de canales/leads/usuarios por HTTP.
+- **Refresh token en cookie httpOnly** (nunca en el body ni en localStorage): el access token vive solo en memoria y se resuelve solo con un refresh silencioso al recargar la página — verificado con Playwright que ni el refresh ni el access token quedan expuestos en `localStorage`.
 
 ## Primeros pasos
 
@@ -64,12 +65,10 @@ Estos son parámetros que el documento deja abiertos ("pendiente de definir con 
 1. **Horas de decaimiento de temperatura** (sección 9.5) — `scoring.service.ts`, default provisorio.
 2. **Plazo sin contacto antes de volver a bolsa** (sección 5, paso 6) — `bolsa.service.ts`, default 30 min.
 3. **Instagram no entrega teléfono real** (solo PSID) — la dedup por teléfono no fusiona un lead de Instagram con el mismo lead si escribe después por WhatsApp. `canales.controller.ts`.
-4. **JWT en localStorage** (`apps/web/src/store/auth.ts`) — legible por XSS; evaluar cookie httpOnly antes de producción.
 
 ## Próximos roles (sección 10 del documento)
 
-Con RLS real, push y la cobertura e2e ya cerrados, lo que queda es más acotado:
+Con RLS real, push, la cobertura e2e y el refresh token en cookie httpOnly ya cerrados, lo que queda es puramente de superficie:
 
-- **Seguridad**: punto 4 de arriba (JWT en localStorage → evaluar cookie httpOnly) antes de producción.
 - **UX/UI**: el frontend es funcional pero sin diseño (estilos inline mínimos); definir el sistema visual real, empezando por los colores de temperatura de sección 9.5.
 - **Backend/Frontend**: profundizar cada módulo (paginación, filtros, manejo de errores más fino).

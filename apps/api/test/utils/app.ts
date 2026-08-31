@@ -1,13 +1,15 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { SchedulerRegistry } from '@nestjs/schedule';
+import cookieParser from 'cookie-parser';
 import { AppModule } from '../../src/app.module';
 
-/** Arma la app completa (mismos pipes/prefijo que main.ts) para pegarle por HTTP con supertest. */
+/** Arma la app completa (mismos pipes/middleware/prefijo que main.ts) para pegarle por HTTP con supertest. */
 export async function crearAppDeTest(): Promise<INestApplication> {
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
 
   const app = moduleRef.createNestApplication();
+  app.use(cookieParser());
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.setGlobalPrefix('api');
   await app.init();
